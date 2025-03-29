@@ -1,66 +1,39 @@
-document.addEventListener("DOMContentLoaded", async function () {
-    const boutonAdhesion = document.getElementById("devenirMembre");
-    const messageAdhesion = document.getElementById("messageAdhesion");
-    const nombreAdherents = document.getElementById("nombreAdherents");
+document.addEventListener("DOMContentLoaded", function() {
+    const bouton = document.getElementById("devenirMembre");
+    const message = document.getElementById("messageAdhesion");
+    const compteur = document.getElementById("nombreAdherents");
 
-    // URL de votre endpoint sécurisé (à remplacer)
-    const API_ENDPOINT = "https://votre-api.com/pain-sacre";
-
-    async function fetchAdherents() {
-        try {
-            const response = await fetch(`${API_ENDPOINT}/adherents`);
-            const data = await response.json();
-            nombreAdherents.textContent = data.total;
-        } catch (error) {
-            console.error("Erreur:", error);
-            // Fallback local
-            nombreAdherents.textContent = localStorage.getItem("localAdherents") || "0";
-        }
-    }
-
-    async function registerAdherent() {
-        try {
-            const response = await fetch(`${API_ENDPOINT}/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem("membrePainSacre", "true");
-                localStorage.setItem("localAdherents", data.total);
-                nombreAdherents.textContent = data.total;
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error("Erreur:", error);
-            return false;
-        }
-    }
-
-    // Initialisation
-    await fetchAdherents();
+    // Charger le compteur depuis le fichier data.json
+    fetch('data.json')
+        .then(response => response.json())
+        .then(data => {
+            compteur.textContent = data.total || 0;
+        })
+        .catch(() => {
+            compteur.textContent = localStorage.getItem('localCount') || 0;
+        });
 
     // Vérifier si déjà membre
-    if (localStorage.getItem("membrePainSacre") === "true") {
-        boutonAdhesion.style.display = "none";
-        messageAdhesion.style.display = "block";
-        messageAdhesion.textContent = "🙏 Vous êtes déjà membre !";
-        return;
+    if (localStorage.getItem('estMembre')) {
+        bouton.style.display = 'none';
+        message.style.display = 'block';
+        message.textContent = "🙏 Vous êtes déjà membre !";
     }
 
     // Gestion du clic
-    boutonAdhesion.addEventListener("click", async function() {
-        const success = await registerAdherent();
+    bouton.addEventListener('click', function() {
+        // Mise à jour locale
+        localStorage.setItem('estMembre', 'true');
+        const nouveauTotal = parseInt(compteur.textContent) + 1;
+        localStorage.setItem('localCount', nouveauTotal);
         
-        if (success) {
-            boutonAdhesion.style.display = "none";
-            messageAdhesion.style.display = "block";
-            messageAdhesion.textContent = "🎉 Bienvenue !";
-        } else {
-            messageAdhesion.style.display = "block";
-            messageAdhesion.textContent = "⚠️ Erreur, réessayez plus tard";
-        }
+        // Affichage
+        bouton.style.display = 'none';
+        message.style.display = 'block';
+        message.textContent = "🎉 Bienvenue parmi nous !";
+        compteur.textContent = nouveauTotal;
+        
+        // Note: La mise à jour de data.json se fera manuellement
+        alert("Merci ! Un Grand Boulanger validera votre adhésion prochainement.");
     });
 });
