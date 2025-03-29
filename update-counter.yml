@@ -1,20 +1,24 @@
 name: Update Counter
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '0 23 * * *' # Tous les jours à 23h
+  workflow_dispatch: # Déclenchement manuel
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Update counter
+      - name: Compter les nouvelles adhésions
         run: |
-          node scripts/update-counter.js
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+          # Script pour compter les nouveaux membres
+          NEW_MEMBERS=$(curl -s "https://api.github.com/repos/votreuser/le-pain-sacre/issues?labels=adhesion" | jq '. | length')
+          echo "Nouveaux membres: $NEW_MEMBERS"
+          # Mettre à jour data.json (exemple simplifié)
+          echo '{"total":'$(( $(curl -s https://votresite.com/data.json | jq '.total') + $NEW_MEMBERS ))'}' > data.json
+      - name: Commit changes
+        run: |
+          git config --global user.name "GitHub Bot"
+          git add data.json
+          git commit -m "Mise à jour automatique du compteur"
+          git push
